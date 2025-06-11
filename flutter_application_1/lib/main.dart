@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'ai_playlist_service.dart';
 import 'github_service.dart';
+import 'sentiment_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,23 +63,58 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   String _commitsResult = '';
+  String _moodResult = '';
+  String _playlistResult = '';
   final TextEditingController _controller = TextEditingController();
   final GitHubService _gitHubService = GitHubService();
+  final SentimentService _sentimentService = SentimentService();
+  final AIPlaylistService _aiPlaylistService = AIPlaylistService();
+  List<String> _commitMessages = [];
 
   Future<void> _fetchCommits() async {
     final username = _controller.text.trim();
     if (username.isEmpty) return;
     setState(() {
       _commitsResult = 'Loading...';
+      _moodResult = '';
+      _playlistResult = '';
     });
     try {
       final commits = await _gitHubService.fetchRecentCommits(username);
+      _commitMessages = commits.map((c) => c['message']?.toString() ?? '').toList();
+      final mood = _sentimentService.analyzeMood(_commitMessages);
       setState(() {
-        _commitsResult = 'Found \\${commits.length} commits. Example message: \\${commits.isNotEmpty ? commits[0]['message'] : 'None'}';
+        _commitsResult =
+            'Found \\${commits.length} commits. Example message: \\${commits.isNotEmpty ? commits[0]['message'] : 'None'}';
+        _moodResult = 'Overall coding mood: \\${mood}';
       });
+      await _fetchPlaylist(mood);
     } catch (e) {
       setState(() {
         _commitsResult = 'Error: \\${e.toString()}';
+        _moodResult = '';
+        _playlistResult = '';
+      });
+    }
+  }
+
+  Future<void> _fetchPlaylist(String mood) async {
+    setState(() {
+      _playlistResult = 'Getting Beyoncé playlist...';
+    });
+    try {
+      final songs = await _aiPlaylistService.getBeyonceSongs(mood);
+      setState(() {
+        _playlistResult = 'Recommended Beyoncé songs:';
+        if (songs.isNotEmpty) {
+          _playlistResult += '\\n' + songs.map((s) => '• $s').join('\\n');
+        } else {
+          _playlistResult += '\\n(No songs found)';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _playlistResult = 'Error: \\${e.toString()}';
       });
     }
   }
@@ -95,72 +132,147 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('Enter GitHub username to fetch recent commits:'),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  labelText: 'GitHub Username',
+      backgroundColor: const Color(0xFF181028), // Deep acai/black
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(80),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.topCenter,
+              radius: 1.2,
+              colors: [
+                Color(0xFF7B2FF2), // Acai purple
+                Color(0xFF181028), // Black
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF7B2FF2),
+                blurRadius: 30,
+                spreadRadius: 1,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Padding(
+              padding: EdgeInsets.only(top: 32.0),
+              child: Text(
+                'Jc101',
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                  shadows: [
+                    Shadow(
+                      color: Color(0xFF7B2FF2),
+                      blurRadius: 16,
+                    ),
+                  ],
                 ),
               ),
             ),
-            ElevatedButton(
-              onPressed: _fetchCommits,
-              child: const Text('Fetch Commits'),
-            ),
-            const SizedBox(height: 20),
-            Text(_commitsResult),
-            const SizedBox(height: 40),
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Color(0xFF2D184A).withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF7B2FF2).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Enter GitHub username to get your Beyoncé playlist:',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _controller,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Color(0xFF181028),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        labelText: 'GitHub Username',
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF7B2FF2)),
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF7B2FF2), width: 2),
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7B2FF2),
+                        foregroundColor: Colors.white,
+                        shadowColor: const Color(0xFF7B2FF2),
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                        textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: _fetchCommits,
+                      child: const Text('Fetch Commits & Get Playlist'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+              if (_commitsResult.isNotEmpty)
+                Text(_commitsResult, style: const TextStyle(color: Colors.white, fontSize: 16)),
+              if (_moodResult.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(_moodResult, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFB388FF), fontSize: 18, shadows: [Shadow(color: Color(0xFF7B2FF2), blurRadius: 8)])),
+              ],
+              if (_playlistResult.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2D184A).withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF7B2FF2).withOpacity(0.2),
+                        blurRadius: 16,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Text(_playlistResult, style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.w600, fontSize: 17)),
+                ),
+              ],
+              const SizedBox(height: 40),
+              // ...existing code for counter or other widgets if needed...
+            ],
+          ),
+        ),
+      ),
+      // ...existing code for floatingActionButton if needed...
     );
   }
 }
