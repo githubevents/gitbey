@@ -1,7 +1,5 @@
 # Miscellaneous
 *.class
-.env
-*.env.local
 *.log
 *.pyc
 *.swp
@@ -13,8 +11,6 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-# macOS related
-*.DS_Store
 
 # IntelliJ related
 *.iml
