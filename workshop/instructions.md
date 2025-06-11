@@ -21,8 +21,8 @@ Before starting the workshop, ensure you have:
 #### Step 1: Fork and Clone Repository
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/githubevents/gitbey 
-cd gitbey
+git clone https://github.com/bonddevconsult/gitbey_local
+cd gitbey_local
 ```
 
 #### Step 2: Configure MCP Servers
