@@ -50,7 +50,7 @@ Follow instructions from '.github/prompts/research.prompt.md'
 #### Step 6: Generate Project Proposal
 ```bash
 # Run the new project prompt
-Follow instructions from '.github/prompts/new.prompt.md'
+Follow instructions from '.github/prompts/prd.prompt.md'
 ```
 
 #### Step 7: Create Implementation Plan
@@ -63,7 +63,7 @@ Follow instructions from '.github/prompts/plan.prompt.md'
 #### Step 8: Create GitHub Issues
 ```bash
 # Create project tracking issues
-Prompt: "create an issue in this repo for this feature"
+Prompt: "create an issue in this repo for a feature"
 ```
 
 #### Step 9: Generate Feature Specifications

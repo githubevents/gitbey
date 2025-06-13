@@ -38,4 +38,4 @@ The correct repo is bonddevconsult/gitbey_local
 -Provide a basic MVP scope that could be delivered quickly to validate this idea.
 ```
 
-Output your plan in the directory "../../docs/crd.md"
+Output your plan in the directory "../../docs/prd.md"
