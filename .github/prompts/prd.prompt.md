@@ -13,6 +13,7 @@ FIRST:
 - Consider edge cases that may not be included in my original proposal.
 - Organize requirements logically, and break them down into units that would make sense as user stories.
 - Raise any important high-level technical considerations, like platforms, languages, frameworks, and overall architecture details
+- Use flutter as the framework for cross-platform development
 
 NEXT:
 - Iterate with me until I tell you I am satisfied.
@@ -37,4 +38,4 @@ The correct repo is bonddevconsult/gitbey_local
 -Provide a basic MVP scope that could be delivered quickly to validate this idea.
 ```
 
-Output your plan in the directory "../../docs/idea.md"
+Output your plan in the directory "../../docs/crd.md"
