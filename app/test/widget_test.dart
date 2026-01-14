@@ -27,4 +27,31 @@ void main() {
     expect(find.text('0'), findsNothing);
     expect(find.text('1'), findsOneWidget);
   });
+
+  testWidgets('Dark mode toggle test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const MyApp());
+
+    // Find the MaterialApp widget
+    final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+    
+    // Initially, theme mode should be light
+    expect(materialApp.themeMode, ThemeMode.light);
+
+    // Tap the theme toggle button (dark_mode icon)
+    await tester.tap(find.byIcon(Icons.dark_mode));
+    await tester.pumpAndSettle();
+
+    // After toggle, verify the icon changed to light_mode
+    expect(find.byIcon(Icons.light_mode), findsOneWidget);
+    expect(find.byIcon(Icons.dark_mode), findsNothing);
+
+    // Tap again to toggle back to light mode
+    await tester.tap(find.byIcon(Icons.light_mode));
+    await tester.pumpAndSettle();
+
+    // Verify the icon changed back to dark_mode
+    expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+    expect(find.byIcon(Icons.light_mode), findsNothing);
+  });
 }
